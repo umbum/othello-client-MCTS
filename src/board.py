@@ -12,6 +12,8 @@ import pygame as pg
 
 import protocol_enum as proto
 import processing
+import g_val as G
+
 
 class Square:
     stone_size = 18
@@ -25,11 +27,6 @@ class Square:
     
     def __ne__(self, other):
         return self.stone != other
-
-    def putStone(self, color: proto.Color):
-        assert(self.stone is proto.Color.EMPTY)
-        self.stone = color
-
 
 def putStone(color: proto.Color, i, j):
     assert(board[i][j].stone is proto.Color.EMPTY)
@@ -49,9 +46,7 @@ def clearAvailablePoints():
         square.available = False
 
 # board init
-SCREEN_WIDTH = 900
-SCREEN_HEIGHT = 600
-board_len = SCREEN_HEIGHT if (SCREEN_HEIGHT < SCREEN_WIDTH) else SCREEN_WIDTH
+board_len = G.SCREEN_HEIGHT if (G.SCREEN_HEIGHT < G.SCREEN_WIDTH) else G.SCREEN_WIDTH
 rect_len = int(board_len / 8)    # 8 * 8 board
 
 board = []    # 2-d array.

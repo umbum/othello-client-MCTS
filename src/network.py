@@ -1,10 +1,8 @@
-import socket
-import threading
-import time
+# 네트워크와 관련된 코드는 여기에.
 
-from util import *
-from protocol_enum import *
-from board import *
+import socket
+import struct
+import json
 
 
 class NetworkManager:
@@ -12,9 +10,6 @@ class NetworkManager:
     static class
     """
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    my_color = None
-    op_color = None
-    my_turn  = False
     loop_running  = None
 
     @classmethod
@@ -26,7 +21,7 @@ class NetworkManager:
         return cls.sock.sendall((serialize(msg)))
 
     @classmethod
-    def recvLoop(cls):
+    def recvLoop(cls, callback):
         """
         thread로 실행할 것.
 
@@ -37,43 +32,29 @@ class NetworkManager:
         """
         cls.loop_running = True
         while cls.loop_running:
-            msg = deserialize(cls.sock)
+            msg = deserialize(cls.sock)    # blocking.
+            callback(msg)   
 
-            # handle message
-            board_lock.acquire()
-            
-            if msg["type"] == MsgType.READY:
-                print("recv READY")
-            elif msg["type"] == MsgType.START:
-                cls.my_color = msg["color"]
-                cls.op_color = Color.WHITE if (cls.my_color == Color.BLACK) else Color.BLACK
-                print("START : {}".format(cls.my_color))
-            elif msg["type"] == MsgType.TURN:
-                if msg["opponent_put"] is not None:
-                    i, j = msg["opponent_put"]
-                    putStone(cls.op_color, i, j)
-                    reverseStones(cls.op_color, i, j)
-                cls.my_turn = True
-                setAvailablePoints(msg["available_points"])
-            elif msg["type"] == MsgType.ACCEPT:
-                # msg["opponent_time_limit"]
-                print("ACCEPT")
-            elif msg["type"] == MsgType.NOPOINT:
-                i, j = msg["opponent_put"]
-                putStone(cls.op_color, i, j)
-                reverseStones(cls.op_color, i, j)
-            elif msg["type"] == MsgType.GAMEOVER:
-                print("GAMEOVER")
-                if msg.get("opponent_put") is not None:
-                    i, j = msg["opponent_put"]
-                    putStone(cls.op_color, i, j)
-                    reverseStones(cls.op_color, i, j)
-                print(msg)
-                exit()
-            elif msg["type"] == MsgType.ERROR:
-                print("ERROR!")
-                print(msg)
 
-            board_lock.release()
+def serialize(msg):
+    body = json.dumps(msg).encode()
+    msg_len = struct.pack('>L', len(body))
+    return msg_len + body
 
-    
+
+def deserialize(sock):
+    """
+
+    Raises
+    ------
+    ConnectionResetError
+    """
+    _msg_len = sock.recv(4)
+    if len(_msg_len) < 4:
+        raise ConnectionResetError
+    msg_len = struct.unpack('>L', _msg_len)[0]
+    msg_raw = sock.recv(msg_len)
+    while len(msg_raw) < msg_len:
+        msg_raw += sock.recv(msg_len - len(msg_raw))
+    msg = json.loads(msg_raw)
+    return msg
