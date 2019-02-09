@@ -21,7 +21,7 @@ class NetworkManager:
         return cls.sock.sendall((serialize(msg)))
 
     @classmethod
-    def recvLoop(cls, callback):
+    def recvLoop(cls, callback, st, player):
         """
         thread로 실행할 것.
 
@@ -33,8 +33,10 @@ class NetworkManager:
         cls.loop_running = True
         while cls.loop_running:
             msg = deserialize(cls.sock)    # blocking.
-            callback(msg)   
-
+            if callback(st, player, msg) == -1:
+                cls.loop_running = False
+        
+        print("recvLoop is terminated")
 
 def serialize(msg):
     body = json.dumps(msg).encode()
