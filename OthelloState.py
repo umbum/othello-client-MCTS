@@ -106,7 +106,8 @@ class OthelloState:
     def GetResult(self, playerjm):
         """ Get the game result from the viewpoint of playerjm. 
         """
-        # TODO : 게임 결과가 이것 말고도 더 있지.
+        # GAMEOVER는 판이 가득 찬 경우, 한 쪽이 전멸하는 경우, 둘 다 놓을 수 없는 경우 세 가지임.
+        # 이 세 가지 경우 모두 돌의 개수를 세면 승/패를 판정할 수 있음. 따라서 MCTS 시뮬레이션 할 때는 이렇게 승/패를 계산해도 됨.
         # 내 돌의 수
         jmcount = len([(x,y) for x in range(self.size) for y in range(self.size) if self.board[x][y] == playerjm])
         # 상대방 돌의 수

@@ -85,7 +85,7 @@ def UCT(rootstate, itermax, verbose = False):
 
         # Expand
         # 노드 객체는 생성되면서 untiredMoves를 계산해서 가지고 있게된다. GAMEOVER나 NOPOINT가 아니면 untiredMoves가 항상 있음.
-        # TODO : NOPOINT면 게임 종료로 처리해버리고있다.  수정해야 할 부분.
+        # NOPOINT일 때도 untiredMoves가 비어있게 되므로 leaf node가 되는데, 시뮬레이션만 중단하고 그 시점의 돌 개수를 세어서 승/패를 판단하므로 큰 영향은 없을 것 같음.
         if node.untriedMoves != []: # if we can expand (i.e. state/node is non-terminal) 게임 오버가 아니면
             m = random.choice(node.untriedMoves)    # 랜덤하게 하나 골라서
             state.putStone(m)    # 움직이고, 변경된 state를 node의 Child로 추가.
