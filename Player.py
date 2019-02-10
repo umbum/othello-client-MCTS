@@ -97,7 +97,7 @@ class HumanPlayer:
         if point in st.cnt_available_points:    # 원래는 여기서 available인지 검사해야함.
             st.putStone(point)
             nm.send({
-                "type": proto.ClntType.PUT,
+                "type": ClntType.PUT,
                 "point": point
             })
             st.cnt_available_points = None
