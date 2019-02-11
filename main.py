@@ -87,10 +87,18 @@ while not DONE:
                 pg.draw.circle(screen, pg.Color("white"), (x_pos + int(G.RECT_LEN / 2), y_pos + int(G.RECT_LEN / 2)), G.STONE_SIZE)
                 white_count += 1
     st.board_lock.release()
+
+    my_color = None
+    if st.my_color == proto.Color.BLACK:
+        my_color = "B"
+    elif st.my_color == proto.Color.WHITE:
+        my_color = "W"
+    text_mycolor = font.render("my color : {}".format(my_color), True, pg.Color("black"))
     text_b = font.render("O : {}".format(black_count), True, pg.Color("black"))
     text_w = font.render("O : {}".format(white_count), True, pg.Color("white"))
-    screen.blit(text_b, (G.BOARD_LEN + 10, 10))
-    screen.blit(text_w, (G.BOARD_LEN + 10, 60))
+    screen.blit(text_mycolor, (G.BOARD_LEN + 10, 10))
+    screen.blit(text_b, (G.BOARD_LEN + 10, 70))
+    screen.blit(text_w, (G.BOARD_LEN + 10, 120))
 
     # hello_msg = font.render("별풍선 감사합니다", True, pg.Color("black"))
     # screen.blit(hello_msg, (G.BOARD_LEN + 10, 150))
