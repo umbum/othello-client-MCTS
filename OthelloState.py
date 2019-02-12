@@ -32,6 +32,7 @@ class OthelloState:
         st.board = [self.board[i][:] for i in range(self.size)]
         st.size = self.size
         st.turn_num = self.turn_num
+        st.cnt_available_points = self.cnt_available_points
         return st
         
     def turnOver(self):
