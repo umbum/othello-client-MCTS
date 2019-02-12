@@ -16,17 +16,17 @@ def addFileHandler():
     다시 foo.log에 쓴다. 즉, 항상 foo.log에 쓰기 때문에 이게 최신 로그이고 숫자가 클 수록 오래된 로그다.
     """
     file_max_byte = 100 * 1024 * 1024
-    BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    BASE_PATH = os.path.dirname(os.path.abspath(__file__))
     log_file_path = BASE_PATH + "\\log\\log.txt"
     file_handler  = logging.handlers.RotatingFileHandler(log_file_path, maxBytes=file_max_byte, backupCount=10)
-    file_handler.setLevel(logging.WARNING)
+    file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
 
 def addConsoleHandler():
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.DEBUG)
+    console_handler.setLevel(logging.WARNING)
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
 
