@@ -39,7 +39,7 @@ class OthelloState:
         assert x == int(x) and y == int(y) and self.IsOnBoard(x,y) and self.board[x][y] == 0
         m = self.GetAllSandwichedCounters(x,y)
         self.playerJustMoved = 3 - self.playerJustMoved
-        
+
         with self.board_lock:
             self.board[x][y] = self.playerJustMoved
             for (a,b) in m:
@@ -125,3 +125,14 @@ class OthelloState:
             s += "\n"
         return s
 
+
+class DummyLock:
+    """
+    multiprocess 모듈을 사용할 때 프로세스에서 실행하는 함수에서 어떤 객체를 참조하고, 그 객체의 멤버에 threading.Lock()변수가 포함되어 있으면
+    이는 pickle이 불가능하다며 에러가 발생한다. 그래서 프로세스에 넘기기 전에 동일한 인터페이스를 가지는 DummyLock으로 변경해준다.
+    """
+    def __enter__(self):
+        return None
+
+    def __exit__(self, type, value, traceback):
+        pass
