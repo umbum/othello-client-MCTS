@@ -1,8 +1,8 @@
 from threading import Lock
+import itertools
 
 # import numpy as np
-
-from protocol_enum import Color
+from protocol_enum import *
 import processing
 
 class OthelloState:
@@ -72,6 +72,17 @@ class OthelloState:
         #     raise Exception
         return processing.getAvailablePosition(self.board, 3 - self.playerJustMoved)
 
+    def isGameover(self):
+        if 0 not in itertools.chain(*self.board):
+            # condition 1. board full
+            return GameoverReason.BOARD_FULL
+        elif 3 - self.playerJustMoved not in itertools.chain(*self.board):
+            # condition 2. 한 종류의 돌이 전멸. 이 경우 내가 놓으면서 내가 질 수는 없으니까, 상대방 색상 돌이 있는지만 체크하면 된다.
+            return GameoverReason.ANNIHILATION
+
+        return False
+
+    ##########################################  unused
     def AdjacentToEnemy(self,x,y):
         """ Speeds up getAvailPoints by only considering squares which are adjacent to an enemy-occupied square.
         """

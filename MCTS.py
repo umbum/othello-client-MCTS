@@ -8,6 +8,7 @@ from processing import *
 from protocol_enum import Color
 from OthelloState import OthelloState, DummyLock
 
+
 class Node:
     """ A node in the game tree. Note wins is always from the viewpoint of playerJustMoved.
         Crashes if state not specified.
@@ -92,7 +93,6 @@ def _UCT(rootstate, timeout, verbose = 0):
 
         # Expand
         # 노드 객체는 생성되면서 untiredMoves를 계산해서 가지고 있게된다. GAMEOVER나 NOPOINT가 아니면 untiredMoves가 항상 있음.
-        # NOPOINT일 때도 untiredMoves가 비어있게 되므로 leaf node가 되는데, 시뮬레이션만 중단하고 그 시점의 돌 개수를 세어서 승/패를 판단하므로 큰 영향은 없을 것 같음.
         if node.untriedMoves != []:
             m = random.choice(node.untriedMoves)
             state.putStone(m)
@@ -101,9 +101,19 @@ def _UCT(rootstate, timeout, verbose = 0):
         
         # Rollout(Simulate) - this can often be made orders of magnitude quicker using a state.GetRandomMove() function
         # expand된 노드부터(여기서는 state가 expand된 node라고 보면 됨.) AvailPoints를 계산하고 랜덤하게 다음 수를 선택하는 방식으로 끝까지 진행해본다.
-        while state.getAvailPoints() != []: # while state is non-terminal
+        nopoint_flag = False
+        while state.isGameover() is False:
+            available_points = state.getAvailPoints()
+            if available_points == []: # NOPOINT
+                if nopoint_flag == True:
+                    # condition 3. 양측 모두 NOPOINT
+                    break
+                else:
+                    state.turnOver()
+                    nopoint_flag = True
+                    continue
             # putStone하니까 state(board)는 새로 갱신됨. 돌을 놓으면서 시뮬레이션해가는거지...
-            state.putStone(random.choice(state.getAvailPoints()))
+            state.putStone(random.choice(available_points))
         
         # 그래서 이 시점에서 state는 GAMEOVER 상태(승, 패가 결정됨) 즉 leaf가 된다.
         # Backpropagate
@@ -112,7 +122,7 @@ def _UCT(rootstate, timeout, verbose = 0):
             node.update(state.GetResult(node.playerJustMoved)) # state is terminal. Update node with result from POV of node.playerJustMoved
             node = node.parentNode
 
-    # Output some information about the tree - can be omitted
+    
     if (verbose == 2): print(rootnode.TreeToString(0))
     elif (verbose == 1): print(rootnode.ChildrenToString())
     
@@ -189,10 +199,12 @@ def UCTPlayGame():
     print(st.getAvailPoints())
     while (st.getAvailPoints() != []):
         print(str(st))
+        tmp_st = st.clone()
         if st.playerJustMoved == 1:
-            m = UCT(rootstate = st, timeout = 2) # play with values for itermax and verbose = True
+            m = UCT(rootstate = tmp_st, timeout = 2) # play with values for itermax and verbose = True
         else:
-            m = UCT_multi(rootstate = st, timeout = 2, max_workers = max_workers)
+            m = UCT(rootstate = tmp_st, timeout = 2) # play with values for itermax and verbose = True
+            # m = UCT_multi(rootstate = tmp_st, timeout = 2, max_workers = max_workers)
         print("Best Move: ", m , "\n")
         st.putStone(m)
 
