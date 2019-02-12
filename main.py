@@ -23,6 +23,7 @@ def main():
     screen = pg.display.set_mode((G.SCREEN_WIDTH, G.SCREEN_HEIGHT))
     pg.display.set_caption("미치셨습니가 휴먼?")
     font = pg.font.SysFont("consolas", 36)
+    font2 = pg.font.SysFont("consolas", 26)
 
     ##################################################################
     # Othello Game board, state init
@@ -86,22 +87,27 @@ def main():
                 elif st.board[i][j] == proto.Color.WHITE:
                     pg.draw.circle(screen, pg.Color("white"), (x_pos + int(G.RECT_LEN / 2), y_pos + int(G.RECT_LEN / 2)), G.STONE_SIZE)
                     white_count += 1
-        st.board_lock.release()
 
         my_color = None
         if st.my_color == proto.Color.BLACK:
             my_color = "B"
         elif st.my_color == proto.Color.WHITE:
             my_color = "W"
-        text_mycolor = font.render("my color : {}".format(my_color), True, pg.Color("black"))
+        turn_num = st.turn_num
+        st.board_lock.release()
+
+        text_mycolor = font2.render("my color : {}".format(my_color), True, pg.Color("black"))
         text_b = font.render("O : {}".format(black_count), True, pg.Color("black"))
         text_w = font.render("O : {}".format(white_count), True, pg.Color("white"))
         screen.blit(text_mycolor, (G.BOARD_LEN + 10, 10))
         screen.blit(text_b, (G.BOARD_LEN + 10, 70))
         screen.blit(text_w, (G.BOARD_LEN + 10, 120))
 
-        # hello_msg = font.render("별풍선 감사합니다", True, pg.Color("black"))
-        # screen.blit(hello_msg, (G.BOARD_LEN + 10, 150))
+        hello_msg = font2.render("multiprocess MCTS", True, pg.Color("black"))
+        text_turn = font2.render("turn : {}".format(turn_num), True, pg.Color("black"))
+        screen.blit(hello_msg, (G.BOARD_LEN + 10, 200))
+        screen.blit(text_turn, (G.BOARD_LEN + 10, 250))
+
         # Go ahead and update the screen with what we've drawn.
         # This MUST happen after all the other drawing commands.
         pg.display.flip()
