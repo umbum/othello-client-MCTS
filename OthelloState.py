@@ -1,15 +1,16 @@
 from threading import Lock
 
-import numpy as np
+# import numpy as np
 
 from protocol_enum import Color
-from processing import getAvailablePosition
+import processing
 
 class OthelloState:
     def __init__(self, sz = 8):
         assert sz == int(sz) and sz % 2 == 0 # size must be integral and even
 
-        self.playerJustMoved = Color.WHITE # 시작할 때 BLACK 부터 움직여야 하므로.
+        # 항상 BLACK부터 시작하므로, WHITE로 설정. 첫 턴의 playerJustMoved가 WHITE이니 첫 턴은 BLACK의 턴이 되어 제대로 게임이 진행된다.
+        self.playerJustMoved = Color.WHITE
         self.size = sz
         self.board_lock = Lock()
         # self.board = np.zeros((8,8), dtype=int)
@@ -21,6 +22,7 @@ class OthelloState:
         self.my_color = None
         self.op_color = None
         self.cnt_available_points = None
+        self.turn_num = 0
 
     def clone(self):
         """ Create a deep clone of this game state.
@@ -29,28 +31,45 @@ class OthelloState:
         st.playerJustMoved = self.playerJustMoved
         st.board = [self.board[i][:] for i in range(self.size)]
         st.size = self.size
+        st.turn_num = self.turn_num
         return st
         
+    def turnOver(self):
+        # switch user
+        self.playerJustMoved = 3 - self.playerJustMoved    # 1 아니면 2 이기 때문에 3 - 로 반대 색상을 구할 수 있음.
+        self.turn_num += 1
+
     def putStone(self, move):
-        """ Update a state by carrying out the given move.
-            Must update playerToMove.
-        """
-        (x,y)=(move[0],move[1])
-        assert x == int(x) and y == int(y) and self.IsOnBoard(x,y) and self.board[x][y] == 0
-        m = self.GetAllSandwichedCounters(x,y)
-        self.playerJustMoved = 3 - self.playerJustMoved
+        self.turnOver()
 
         with self.board_lock:
-            self.board[x][y] = self.playerJustMoved
-            for (a,b) in m:
-                self.board[a][b] = self.playerJustMoved
+            i, j = move
+            self.board[i][j] = self.playerJustMoved
+            reversed_points = processing.getReversedPosition(self.board, self.playerJustMoved, move[0], move[1])
+            
+            for i, j in reversed_points:
+                self.board[i][j] = self.playerJustMoved
+
+
+        # (x,y)=(move[0],move[1])
+        # assert x == int(x) and y == int(y) and self.IsOnBoard(x,y) and self.board[x][y] == 0
+        # m = self.GetAllSandwichedCounters(x,y)
+        # self.playerJustMoved = 3 - self.playerJustMoved
+
+        # with self.board_lock:
+        #     self.board[x][y] = self.playerJustMoved
+        #     for (a,b) in m:
+        #         self.board[a][b] = self.playerJustMoved
     
     def getAvailPoints(self):
-        """ Get all possible moves from this state.
-        """
-        # print([(x,y) for x in range(self.size) for y in range(self.size) if self.board[x][y] == 0 and self.ExistsSandwichedCounter(x,y)])
-        # print(getAvailablePosition(self.board, 3 - self.playerJustMoved))
-        return [(x,y) for x in range(self.size) for y in range(self.size) if self.board[x][y] == 0 and self.ExistsSandwichedCounter(x,y)]
+        # TODO : DEBUG용.
+        # r1 = [(x,y) for x in range(self.size) for y in range(self.size) if self.board[x][y] == 0 and self.ExistsSandwichedCounter(x,y)]
+        # r2 = processing.getAvailablePosition(self.board, 3 - self.playerJustMoved)
+        # if (r1 != r2):
+        #     print(r1)
+        #     print(r2)
+        #     raise Exception
+        return processing.getAvailablePosition(self.board, 3 - self.playerJustMoved)
 
     def AdjacentToEnemy(self,x,y):
         """ Speeds up getAvailPoints by only considering squares which are adjacent to an enemy-occupied square.

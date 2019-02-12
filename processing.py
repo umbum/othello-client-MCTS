@@ -41,6 +41,15 @@ def chkAround(map, x,y,color):   # 돌 주변 8칸에 나랑 다른 색의 돌�
 
 def getAvailablePosition(board, color):
     result = []
+    for i in range(len(board)):  # 맵 순회
+        for j in range(len(board[i])): # 맵 순회
+            if board[i][j]== 0 and getReversedPosition(board,color,i,j):  # 해당 좌표가 비어있고, 해당 방향에서 뒤집을 수 있는 돌 리스트가 비어있지 않으면
+               result.append((i,j))  #좌표 기입
+    return result  # 착수 가능한 좌표 리스트 반환
+
+
+def getAvailablePositionNP(board, color):
+    result = []
     for i, j in zip(*np.where(board == 0)):
         if getReversedPosition(board,color,i,j):  # 해당 좌표가 비어있고, 해당 방향에서 뒤집을 수 있는 돌 리스트가 비어있지 않으면
             result.append((int(i),int(j)))  #좌표 기입
