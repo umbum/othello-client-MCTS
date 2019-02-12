@@ -2,14 +2,11 @@
 from math import *
 import random
 import time
-from multiprocessing import Pool
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-import numpy as np
-
+from processing import *
 from protocol_enum import Color
 from OthelloState import OthelloState, DummyLock
-
 
 class Node:
     """ A node in the game tree. Note wins is always from the viewpoint of playerJustMoved.
@@ -129,18 +126,30 @@ def UCT(rootstate, timeout, verbose = 1):
 def UCT_multi(rootstate, timeout, max_workers, verbose = 1):
     tmp_st = rootstate.clone()
     tmp_st.board_lock = DummyLock()    # threading.Lock()은 pickle이 불가능해서 에러나기 때문에 바꿔준다.
-    processing_results = []
-    with ProcessPoolExecutor(max_workers) as e:
-        # max worker만큼 작업을 시작.
-        futures = [e.submit(_UCT, tmp_st, timeout, False) for _ in range(max_workers)]
-        for future in as_completed(futures):
-            # 각 process들이 끝나는 대로, result_list에 추가.
-            processing_results.append(future.result())
 
-    return assembleMultiResult(processing_results, verbose)
+    if [0, 0] in tmp_st.cnt_available_points:
+        m = [0, 0]
+    elif [7, 7] in tmp_st.cnt_available_points:
+        m = [7, 7]
+    elif [0, 7] in tmp_st.cnt_available_points:
+        m = [0, 7]
+    elif [7, 0] in tmp_st.cnt_available_points:
+        m = [7, 0]
+    else:
+        processing_results = []
+        with ProcessPoolExecutor(max_workers) as e:
+            # max worker만큼 작업을 시작.
+            futures = [e.submit(_UCT, tmp_st, timeout, False) for _ in range(max_workers)]
+            for future in as_completed(futures):
+                # 각 process들이 끝나는 대로, result_list에 추가.
+                processing_results.append(future.result())
+
+        m = assembleMultiResult(tmp_st, processing_results, verbose)
+        
+    return m
 
 
-def assembleMultiResult(multi_child_nodes, verbose = 1):
+def assembleMultiResult(st, multi_child_nodes, verbose = 1):
     assembled_result = {}    # move를 key로 하고 (W,V)를 value로 하는 dict
     for child_nodes in multi_child_nodes:
         for node in child_nodes:
@@ -153,12 +162,31 @@ def assembleMultiResult(multi_child_nodes, verbose = 1):
     if verbose == 1:
         for node in assembled_result.values():
             print(node)
-    return sorted(assembled_result.values(), key = lambda x: x.visits)[-1].move
+    
+    sorted_by_visit = sorted(assembled_result.values(), key = lambda x: x.visits)
+    most_visit = sorted_by_visit[-1]
+    result = most_visit.move
+    print(most_visit.move)
+
+    if len(sorted_by_visit) >= 2:
+        # 모서리 휴리스틱.
+        if (most_visit.move in ((0, 1), (1, 0), (1, 1)) and st.board[0][0] == Color.EMPTY) or \
+            (most_visit.move in ((0, 6), (1, 6), (1, 7)) and st.board[0][7] == Color.EMPTY) or \
+            (most_visit.move in ((6, 0), (6, 1), (7, 1)) and st.board[7][0] == Color.EMPTY) or \
+            (most_visit.move in ((6, 6), (6, 7), (7, 6)) and st.board[7][7] == Color.EMPTY):
+            second_visit = sorted_by_visit[-2]
+            if most_visit.visits * 0.9 < second_visit.visits:
+                # 방문 수에 0.9를 곱해서 감가했을 때, second most visited의 방문 횟수가 더 높다면, second쪽으로 간다.
+                result = second_visit.move
+
+    return result
+
 
 
 def UCTPlayGame():
     st = OthelloState(8)
     max_workers = 12
+    print(st.getAvailPoints())
     while (st.getAvailPoints() != []):
         print(str(st))
         if st.playerJustMoved == 1:
