@@ -87,6 +87,11 @@ def main():
                 elif st.board[i][j] == proto.Color.WHITE:
                     pg.draw.circle(screen, pg.Color("white"), (x_pos + int(G.RECT_LEN / 2), y_pos + int(G.RECT_LEN / 2)), G.STONE_SIZE)
                     white_count += 1
+        
+        if st.cnt_available_points is not None:
+            for i, j in st.cnt_available_points:
+                y_pos, x_pos = i * G.RECT_LEN, j * G.RECT_LEN
+                pg.draw.rect(screen, pg.Color("green"), (x_pos, y_pos, G.RECT_LEN, G.RECT_LEN), 1)
 
         my_color = None
         if st.my_color == proto.Color.BLACK:
